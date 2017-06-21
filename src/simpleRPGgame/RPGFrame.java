@@ -26,7 +26,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 	private JComboBox cboItemBuy = new JComboBox();
 	private JLabel lblReminder = new JLabel("<html>Remember to buy items and spend your EXP before moving on... <br>(if the + buttons are available, it means you have EXP to spend.)<br>\r\nYour progress is saved when entering and leaving a town.</html>");
 	private JButton btnBuyItem = new JButton("Buy Item");
-	private JLabel lblpotionHealing = new JLabel("<html><b>Potion</b> - Healing - 10 Coins<br>\r\nHeals 25 HP upon use.</html>");
+	private JLabel lblBuyItemDesc = new JLabel("<html><b>Potion</b> - Healing - 10 Coins<br>\r\nHeals 25 HP upon use.</html>");
 	private JButton btnNextTown = new JButton("Proceed to Woodstown");
 	
 	private JPanel travelPanel = new JPanel();
@@ -67,7 +67,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 	private JLabel lblExp = new JLabel("EXP: 1000");		
 	private JLabel lblWeapon = new JLabel("Weapon: Sword");		
 	private JLabel lblArmor = new JLabel("Armor: Leather");		
-	private JLabel lblTestHeals = new JLabel("Potion: Heals 25 HP upon use.");
+	private JLabel lblItemDesc = new JLabel("<html><b>Potion</b>: Heals 25 HP upon use.</html>");
 	
 	private JMenuBar menuBar = new JMenuBar();		
 	private JMenu mnGame = new JMenu("Game");		
@@ -82,7 +82,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 	
 	public RPGFrame() {
 		super("Simple RPG Game");
-		setSize(480,380);
+		setSize(480,420);
         setLocation((int)getToolkit().getScreenSize().getWidth()/2-254,(int)getToolkit().getScreenSize().getHeight()/2-310);
         setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //Hitting the X will close the program safely.
@@ -177,10 +177,10 @@ public class RPGFrame extends JFrame implements ActionListener {
 		btnBuyItem.setBounds(250, 82, 89, 23);
 		townPanel.add(btnBuyItem);
 		
-		lblpotionHealing.setHorizontalAlignment(SwingConstants.CENTER);
-		lblpotionHealing.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		lblpotionHealing.setBounds(104, 104, 235, 45);
-		townPanel.add(lblpotionHealing);
+		lblBuyItemDesc.setHorizontalAlignment(SwingConstants.CENTER);
+		lblBuyItemDesc.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		lblBuyItemDesc.setBounds(104, 104, 235, 45);
+		townPanel.add(lblBuyItemDesc);
 		
 		btnNextTown.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		btnNextTown.setBounds(267, 155, 195, 23);
@@ -281,87 +281,87 @@ public class RPGFrame extends JFrame implements ActionListener {
 
 		lblCharacterName.setHorizontalAlignment(SwingConstants.LEFT);
 		lblCharacterName.setFont(new Font("Bookman Old Style", Font.BOLD, 14));
-		lblCharacterName.setBounds(10, 31, 328, 17);
+		lblCharacterName.setBounds(10, 45, 328, 17);
 		statusBar.add(lblCharacterName);
 
 		cboItems.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		cboItems.setModel(new DefaultComboBoxModel(new String[] {"Potion", "Test"}));
-		cboItems.setBounds(10, 4, 136, 20);
+		cboItems.setBounds(10, 14, 136, 20);
 		statusBar.add(cboItems);
 
 		btnUseItem.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		btnUseItem.setBounds(378, 3, 89, 23);
+		btnUseItem.setBounds(378, 13, 89, 23);
 		statusBar.add(btnUseItem);
 
 		lblAtk.setForeground(new Color(165, 42, 42));
 		lblAtk.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblAtk.setBounds(20, 56, 70, 15);
+		lblAtk.setBounds(20, 70, 55, 15);
 		statusBar.add(lblAtk);
 
 		lblDef.setForeground(new Color(85, 107, 47));
 		lblDef.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblDef.setBounds(20, 77, 70, 15);
+		lblDef.setBounds(20, 91, 55, 15);
 		statusBar.add(lblDef);
 
 		lblSpd.setForeground(new Color(72, 61, 139));
 		lblSpd.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblSpd.setBounds(151, 56, 70, 15);
+		lblSpd.setBounds(151, 70, 60, 15);
 		statusBar.add(lblSpd);
 
 		lblInt.setForeground(new Color(0, 0, 128));
 		lblInt.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblInt.setBounds(151, 77, 70, 15);
+		lblInt.setBounds(151, 91, 55, 15);
 		statusBar.add(lblInt);
 
 		btnUpgAtk.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgAtk.setEnabled(false);
-		btnUpgAtk.setBounds(82, 59, 20, 12);
+		btnUpgAtk.setBounds(82, 73, 20, 12);
 		statusBar.add(btnUpgAtk);
 		
 		btnUpgDef.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgDef.setEnabled(false);
-		btnUpgDef.setBounds(82, 79, 20, 12);
+		btnUpgDef.setBounds(82, 93, 20, 12);
 		statusBar.add(btnUpgDef);
 
 		btnUpgSpd.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgSpd.setEnabled(false);
-		btnUpgSpd.setBounds(217, 59, 20, 12);
+		btnUpgSpd.setBounds(217, 73, 20, 12);
 		statusBar.add(btnUpgSpd);
 
 		btnUpgInt.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgInt.setEnabled(false);
-		btnUpgInt.setBounds(217, 80, 20, 12);
+		btnUpgInt.setBounds(217, 94, 20, 12);
 		statusBar.add(btnUpgInt);
 
 		lblMoney.setForeground(new Color(128, 128, 0));
 		lblMoney.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 14));
-		lblMoney.setBounds(388, 59, 85, 15);
+		lblMoney.setBounds(388, 73, 85, 15);
 		statusBar.add(lblMoney);
 
 		lblHP.setForeground(new Color(85, 107, 47));
 		lblHP.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 14));
-		lblHP.setBounds(388, 40, 85, 15);
+		lblHP.setBounds(388, 54, 85, 15);
 		statusBar.add(lblHP);
 
 		lblExp.setForeground(new Color(75, 0, 130));
 		lblExp.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 14));
-		lblExp.setBounds(388, 80, 85, 15);
+		lblExp.setBounds(388, 94, 85, 15);
 		statusBar.add(lblExp);
 
 		lblWeapon.setForeground(new Color(128, 0, 128));
 		lblWeapon.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblWeapon.setBounds(250, 56, 105, 15);
+		lblWeapon.setBounds(250, 70, 105, 15);
 		statusBar.add(lblWeapon);
 
 		lblArmor.setForeground(new Color(0, 128, 128));
 		lblArmor.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblArmor.setBounds(250, 78, 105, 15);
+		lblArmor.setBounds(250, 92, 105, 15);
 		statusBar.add(lblArmor);
 
-		lblTestHeals.setHorizontalAlignment(SwingConstants.RIGHT);
-		lblTestHeals.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		lblTestHeals.setBounds(156, 6, 212, 17);
-		statusBar.add(lblTestHeals);
+		lblItemDesc.setHorizontalAlignment(SwingConstants.RIGHT);
+		lblItemDesc.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		lblItemDesc.setBounds(156, 6, 212, 36);
+		statusBar.add(lblItemDesc);
 
 		setJMenuBar(menuBar);
 
