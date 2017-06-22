@@ -1,3 +1,4 @@
+package simpleRPGgame;
 import java.sql.*;
 import javax.swing.*;
 

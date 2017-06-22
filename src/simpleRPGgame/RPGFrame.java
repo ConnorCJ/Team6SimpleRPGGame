@@ -3,8 +3,13 @@ package simpleRPGgame;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class RPGFrame extends JFrame implements ActionListener {
+	int current_charID = 1;
 
 	private static final long serialVersionUID = 1L;
 
@@ -408,7 +413,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 	{
 		Object c = e.getSource();
 		
-		
 		//title / main menu
 		if(c == btnNewGame) //New Game button
 		{
@@ -418,7 +422,26 @@ public class RPGFrame extends JFrame implements ActionListener {
 			}
 			else
 			{
-				System.out.println("New Game"); //note: all of this is placeholder to confirm button input works.
+				String newName = nameField.getText();
+				
+				Connection con = SQLConnection.getConnection();
+				
+				try{
+					con.setAutoCommit(false);
+					
+					Statement stmt = con.createStatement();
+					String rs = ("INSERT INTO CHARACTER (CHARID,NAME,ATTACK,DEFENSE,SPEED,INTELLIGENCE,MONEY,MAXHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
+					+ "VALUES ("+ current_charID +", '" + newName + "', 5, 5, 5, 5, 50, 10, 1, 5, 5, 1000);");
+					current_charID++;
+					stmt.executeUpdate(rs);
+					stmt.close();
+					con.commit();
+					con.close();
+					System.out.println(newName + " added to database");
+					
+				}catch (SQLException ex) {
+					System.out.println(ex);
+				}
 			}
 		}
 		if(c == btnContinueGame) //Continue Game button
@@ -427,7 +450,23 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
-			System.out.println("Delete Character");
+			Connection con = SQLConnection.getConnection();
+			String nameToDelete = nameField.getText();
+			
+			try{
+				con.setAutoCommit(false);
+				
+				Statement stmt = con.createStatement();
+				String rs = "DELETE FROM CHARACTER WHERE NAME='"+ nameToDelete + "';";
+				stmt.executeUpdate(rs);
+				stmt.close();
+				con.commit();
+				con.close();
+				System.out.println(nameToDelete + " deleted from database");
+				
+			}catch (SQLException ex) {
+				System.out.println(ex);
+			}
 		}
 		if(c == cboLoad) //Combo box containing characters changes in selection
 		{
