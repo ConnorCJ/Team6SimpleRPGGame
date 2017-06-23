@@ -135,7 +135,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		btnContinueGame.setBounds(271, 134, 160, 23);
 		titlePanel.add(btnContinueGame);
 		
-		cboLoad.setModel(new DefaultComboBoxModel(new String[] {"test", "test2"}));
+		cboLoad.setModel(new DefaultComboBoxModel(createCharacterArray()));
 		cboLoad.setBounds(118, 135, 143, 20);
 		titlePanel.add(cboLoad);
 		
@@ -423,6 +423,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			else
 			{
 				String newName = nameField.getText();
+				Character newChar = new Character(newName, findHighCharID() + 1);
 				
 				Connection con = SQLConnection.getConnection();
 				
@@ -431,8 +432,11 @@ public class RPGFrame extends JFrame implements ActionListener {
 					
 					Statement stmt = con.createStatement();
 					String rs = ("INSERT INTO CHARACTER (CHARID,NAME,ATTACK,DEFENSE,SPEED,INTELLIGENCE,MONEY,MAXHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
-					+ "VALUES ("+ current_charID +", '" + newName + "', 5, 5, 5, 5, 50, 10, 1, 5, 5, 1000);");
-					current_charID++;
+					+ "VALUES ("+ newChar.getCharID() +", '" + newChar.getName() + "', "+ newChar.getAttack() + ", " + newChar.getDefense() + ", " + newChar.getSpeed() + ", " +
+							newChar.getIntelligence() + ", " + newChar.getMoney() + ", " + newChar.getMaxHP() + ", " + newChar.getAtTown() + ", " + 
+							newChar.getEqWeapon() + ", " + newChar.getEqArmor() + ", " + newChar.getExp() + ");");
+					
+					System.out.println(current_charID);
 					stmt.executeUpdate(rs);
 					stmt.close();
 					con.commit();
@@ -451,13 +455,14 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
 			Connection con = SQLConnection.getConnection();
-			String nameToDelete = nameField.getText();
+			String nameToDelete = cboLoad.getSelectedItem().toString();
 			
 			try{
 				con.setAutoCommit(false);
 				
 				Statement stmt = con.createStatement();
 				String rs = "DELETE FROM CHARACTER WHERE NAME='"+ nameToDelete + "';";
+
 				stmt.executeUpdate(rs);
 				stmt.close();
 				con.commit();
@@ -554,6 +559,61 @@ public class RPGFrame extends JFrame implements ActionListener {
 			System.exit(0);
 		}
 		
+	}
+	
+	public int findHighCharID(){
+		
+		Connection con = SQLConnection.getConnection();
+
+		int high = 0;
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
+			
+			while(rs.next()){
+				high = rs.getInt("CHARID");
+			}
+			stmt.close();
+			con.commit();
+			con.close();
+			
+		}catch (SQLException ex) {
+			System.out.println(ex);
+		}
+		
+		return high;
+		
+	}
+	
+	public String[] createCharacterArray(){
+		
+		Connection con = SQLConnection.getConnection();
+		String[] listOfCharacters = new String[findHighCharID()];
+		//if (current_charID == 1)
+		//	return new String[]{};
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
+			
+			while(rs.next()){
+				String name = rs.getString("NAME");
+				int ID = rs.getInt("CHARID");
+				listOfCharacters[ID - 1] = name;
+			}
+			stmt.close();
+			con.commit();
+			con.close();
+			
+		}catch (SQLException ex) {
+			System.out.println(ex);
+		}
+		return listOfCharacters;
 	}
 
 }
