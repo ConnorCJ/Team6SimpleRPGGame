@@ -63,7 +63,17 @@ public class Item {
 		return itemTypes[type];
 	}
 	
-
+	public int getItemID(){
+		return ID;
+	}
+	
+	public int getPrice(){
+		return price;
+	}
+	
+	public String getName(){
+		return name;
+	}
 	
 	
 }

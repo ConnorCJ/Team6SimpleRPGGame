@@ -10,6 +10,7 @@ import java.sql.Statement;
 
 public class RPGFrame extends JFrame implements ActionListener {
 	int current_charID = 1;
+	Character currentChar;
 
 	private static final long serialVersionUID = 1L;
 
@@ -167,7 +168,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		lblTownname.setBounds(27, 11, 213, 19);
 		townPanel.add(lblTownname);
 		
-		cboItemBuy.setModel(new DefaultComboBoxModel(new String[] {"Potion", "Sword"}));
+		cboItemBuy.setModel(new DefaultComboBoxModel(createItemArray()));
 		cboItemBuy.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		cboItemBuy.setBounds(104, 82, 136, 22);
 		townPanel.add(cboItemBuy);
@@ -423,7 +424,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			else
 			{
 				String newName = nameField.getText();
-				Character newChar = new Character(newName, findHighCharID() + 1);
+				currentChar = new Character(newName, findHighCharID() + 1);
 				
 				Connection con = SQLConnection.getConnection();
 				
@@ -432,9 +433,9 @@ public class RPGFrame extends JFrame implements ActionListener {
 					
 					Statement stmt = con.createStatement();
 					String rs = ("INSERT INTO CHARACTER (CHARID,NAME,ATTACK,DEFENSE,SPEED,INTELLIGENCE,MONEY,MAXHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
-					+ "VALUES ("+ newChar.getCharID() +", '" + newChar.getName() + "', "+ newChar.getAttack() + ", " + newChar.getDefense() + ", " + newChar.getSpeed() + ", " +
-							newChar.getIntelligence() + ", " + newChar.getMoney() + ", " + newChar.getMaxHP() + ", " + newChar.getAtTown() + ", " + 
-							newChar.getEqWeapon() + ", " + newChar.getEqArmor() + ", " + newChar.getExp() + ");");
+					+ "VALUES ("+ currentChar.getCharID() +", '" + currentChar.getName() + "', "+ currentChar.getAttack() + ", " + currentChar.getDefense() + ", " + currentChar.getSpeed() + ", " +
+							currentChar.getIntelligence() + ", " + currentChar.getMoney() + ", " + currentChar.getMaxHP() + ", " + currentChar.getAtTown() + ", " + 
+							currentChar.getEqWeapon() + ", " + currentChar.getEqArmor() + ", " + currentChar.getExp() + ");");
 					
 					System.out.println(current_charID);
 					stmt.executeUpdate(rs);
@@ -482,6 +483,43 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(c == btnBuyItem) //Buy Item
 		{
 			System.out.println("Buy Item");
+			
+			Connection con = SQLConnection.getConnection();
+			String itemToBuy = cboItemBuy.getSelectedItem().toString();
+			int price = 0, id = 0;
+			
+			try{
+				con.setAutoCommit(false);
+				
+				String sql = "SELECT * FROM ITEM WHERE ItemName = " + "'" + itemToBuy + "';";
+				Statement stmt = con.createStatement();
+				ResultSet rs1 = stmt.executeQuery(sql);
+				while(rs1.next()){
+					price = rs1.getInt("PRICE");
+					id = rs1.getInt("ITEMID");
+				}
+				if(price > currentChar.getMoney()){
+					System.out.println("Not enough money");
+					stmt.close();
+					con.commit();
+					con.close();
+				}
+				else{
+					String rs = "INSERT INTO ITEMONCHAR (CHARID, ITEMID) VALUES (" + currentChar.getCharID() + ", " + id + ");";
+
+					stmt.executeUpdate(rs);
+					stmt.close();
+					con.commit();
+					con.close();
+					currentChar.setMoney(currentChar.getMoney() - price);
+					System.out.println(itemToBuy + " bought for " + price + "\nNew Balance: " + currentChar.getMoney());
+				}
+				
+				
+			}catch (SQLException ex) {
+				System.out.println(ex);
+			}
+			
 		}
 		if(c == btnNextTown) //Next Town button, showing something like 'Proceed to Woodstown'
 		{
@@ -592,8 +630,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 		
 		Connection con = SQLConnection.getConnection();
 		String[] listOfCharacters = new String[findHighCharID()];
-		//if (current_charID == 1)
-		//	return new String[]{};
 		
 		try{
 			con.setAutoCommit(false);
@@ -614,6 +650,32 @@ public class RPGFrame extends JFrame implements ActionListener {
 			System.out.println(ex);
 		}
 		return listOfCharacters;
+	}
+	
+	public String[] createItemArray(){
+		Connection con = SQLConnection.getConnection();
+		String[] listOfItems = new String[3];
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM ITEM;");
+			
+			while(rs.next()){
+				String name = rs.getString("ITEMNAME");
+				int ID = rs.getInt("ITEMID");
+				listOfItems[ID - 1] = name;
+			}
+			stmt.close();
+			con.commit();
+			con.close();
+			
+		}catch (SQLException ex) {
+			System.out.println(ex);
+		}
+		return listOfItems;
+		
 	}
 
 }
