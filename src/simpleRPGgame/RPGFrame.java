@@ -574,7 +574,8 @@ public class RPGFrame extends JFrame implements ActionListener {
 			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
 			
 			while(rs.next()){
-				high = rs.getInt("CHARID");
+				if(rs.getInt("CHARID") > high)
+					high = rs.getInt("CHARID");
 			}
 			stmt.close();
 			con.commit();
