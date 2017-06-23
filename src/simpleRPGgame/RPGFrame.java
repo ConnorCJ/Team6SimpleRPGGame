@@ -451,7 +451,8 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		if(c == btnContinueGame) //Continue Game button
 		{
-			System.out.println("Continue Game");
+			currentChar = new Character(cboLoad.getSelectedItem().toString());
+			System.out.println("Continuing with character " + currentChar.getName());
 		}
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
@@ -512,6 +513,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 					con.commit();
 					con.close();
 					currentChar.setMoney(currentChar.getMoney() - price);
+					currentChar.saveCharacter();
 					System.out.println(itemToBuy + " bought for " + price + "\nNew Balance: " + currentChar.getMoney());
 				}
 				

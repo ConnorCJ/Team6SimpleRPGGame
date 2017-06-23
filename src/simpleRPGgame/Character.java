@@ -1,5 +1,10 @@
 package simpleRPGgame;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 public class Character {
 	
 	String name;
@@ -14,6 +19,58 @@ public class Character {
 		atTown = 1;
 		exp = 1000;
 		
+	}
+	
+	public Character(String charName){
+		Connection con = SQLConnection.getConnection();
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER WHERE Name = '" + charName + "'");
+			
+			this.name = charName;
+			this.charID = rs.getInt("CharID");
+			this.attack = rs.getInt("Attack");
+			this.defense = rs.getInt("Defense");
+			this.speed = rs.getInt("Speed");
+			this.intelligence = rs.getInt("Intelligence");
+			this.money = rs.getInt("Money");
+			this.maxHP = rs.getInt("MaxHP");
+			this.atTown = rs.getInt("AtTown");
+			this.eqWeapon = rs.getInt("EqWeapon");
+			this.eqArmor = rs.getInt("EqArmor");
+			this.exp = rs.getInt("EXP");
+			
+			rs.close();
+			stmt.close();
+			con.close();
+			
+		}catch (SQLException ex){
+			System.out.println(ex);
+		}
+		
+	}
+	
+	public void saveCharacter(){
+		Connection con = SQLConnection.getConnection();
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			stmt.executeUpdate("UPDATE CHARACTER set attack =" + attack + ", defense=" + defense + ", speed=" + speed +
+										", intelligence=" + intelligence + ", money=" + money + ", atTown=" + (atTown+1) + ", eqWeapon=" + eqWeapon +
+										", eqArmor=" + eqArmor + ", exp=" + exp + " where CHARID =" + charID + ";");
+			
+			stmt.close();
+			con.commit();
+			con.close();
+			
+		}catch (SQLException ex) {
+			System.out.println(ex);
+		}
 	}
 
 	public String getName() {
