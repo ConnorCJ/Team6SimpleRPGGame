@@ -423,7 +423,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			else
 			{
 				String newName = nameField.getText();
-				Character newChar = new Character(newName, current_charID++);
+				Character newChar = new Character(newName, findHighCharID() + 1);
 				
 				Connection con = SQLConnection.getConnection();
 				
@@ -455,7 +455,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
 			Connection con = SQLConnection.getConnection();
-			String nameToDelete = nameField.getText();
+			String nameToDelete = cboLoad.getSelectedItem().toString();
 			
 			try{
 				con.setAutoCommit(false);
@@ -561,12 +561,39 @@ public class RPGFrame extends JFrame implements ActionListener {
 		
 	}
 	
+	public int findHighCharID(){
+		
+		Connection con = SQLConnection.getConnection();
+
+		int high = 0;
+		
+		try{
+			con.setAutoCommit(false);
+			
+			Statement stmt = con.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
+			
+			while(rs.next()){
+				high = rs.getInt("CHARID");
+			}
+			stmt.close();
+			con.commit();
+			con.close();
+			
+		}catch (SQLException ex) {
+			System.out.println(ex);
+		}
+		
+		return high;
+		
+	}
+	
 	public String[] createCharacterArray(){
 		
 		Connection con = SQLConnection.getConnection();
-		String[] listOfCharacters = new String[current_charID];
-		if (current_charID == 1)
-			return new String[]{};
+		String[] listOfCharacters = new String[findHighCharID()];
+		//if (current_charID == 1)
+		//	return new String[]{};
 		
 		try{
 			con.setAutoCommit(false);
@@ -577,7 +604,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			while(rs.next()){
 				String name = rs.getString("NAME");
 				int ID = rs.getInt("CHARID");
-				listOfCharacters[ID] = name;
+				listOfCharacters[ID - 1] = name;
 			}
 			stmt.close();
 			con.commit();
