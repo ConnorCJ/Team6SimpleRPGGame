@@ -13,16 +13,16 @@ public class Item {
 	public Item(int itemID) //get an item based off of the given item ID
 	{
 		Connection con = SQLConnection.getConnection();
-		String sql = "SELECT * FROM Item WHERE ItemID = " + Integer.toString(itemID);
 
         try
         	{
         	con.setAutoCommit(false);
        	 	Statement stmt = con.createStatement();
-       	 	ResultSet rs    = stmt.executeQuery(sql);
+    	 	ResultSet rs  	= stmt.executeQuery("SELECT COUNT(itemID) AS Test FROM Item WHERE itemID = " + itemID + ";");
 
-       	 	if(rs.absolute(1))
+       	 	if(rs.getInt("Test") > 0)
     	 	{
+       	 		rs    = stmt.executeQuery("SELECT * FROM Item WHERE ItemID = " + Integer.toString(itemID));
                 name = rs.getString("ItemName");
                 desc = rs.getString("ItemDesc");
                 ID = rs.getInt("ItemID");
