@@ -679,29 +679,55 @@ public class RPGFrame extends JFrame implements ActionListener {
 		{
 			if(cboItems.getItemCount() > 0)
 			{
-			System.out.println("Item Combo Box - selected item: " + cboItems.getSelectedItem());
-			if(cboItems.getSelectedIndex() == -1) cboItems.setSelectedIndex(0);
-			Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
-			lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
+				System.out.println("Item Combo Box - selected item: " + cboItems.getSelectedItem());
+				if(cboItems.getSelectedIndex() == -1) cboItems.setSelectedIndex(0);
+				Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
+				lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
 			}
 		}
 		
 		//Upgrading: Spend 100 EXP per stat upgrade. Probably need a method to add/subtract EXP while simultaneously checking to see if EXP > 100 to enable the buttons.
 		if(c == btnUpgAtk) //Upgrade attack power
 		{
-			System.out.println("Upgrade Attack");
+			if(!checkEXP(currentChar))
+				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+				
+			else{
+				currentChar.increaseAttack();
+				currentChar.decreaseEXP();
+				refreshStatus(ST_EXP | ST_HP | ST_WEPATK);
+			}
 		}
 		if(c == btnUpgDef) //Upgrade defenses
 		{
-			System.out.println("Upgrade Defense");
+			if(!checkEXP(currentChar))
+				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			
+			else{
+				currentChar.increaseDef();
+				currentChar.decreaseEXP();
+				refreshStatus(ST_EXP | ST_HP | ST_ARMDEF);
+			}
 		}
 		if(c == btnUpgSpd) //Upgrade speed
 		{
-			System.out.println("Upgrade Speed");
+			if(!checkEXP(currentChar))
+				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			else{
+				currentChar.increaseSpeed();
+				currentChar.decreaseEXP();
+				refreshStatus(ST_EXP | ST_HP | ST_SPD);
+			}
 		}
 		if(c == btnUpgInt) //Upgrade intellect
 		{
-			System.out.println("Upgrade Intellect");
+			if(!checkEXP(currentChar))
+				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			else{
+				currentChar.increaseIntel();
+				currentChar.decreaseEXP();
+				refreshStatus(ST_EXP | ST_HP | ST_INT);
+			}
 		}
 		
 		if(c == mntmTitle) //Menu option Title selected - this will make the player go back to the title screen, effectively quitting without exiting the program.
@@ -718,6 +744,11 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		
 	}
-
+	
+	public boolean checkEXP(Character c){
+		if(c.getEXP() >= 100)
+			return true;
+		return false;
+	}
 
 }

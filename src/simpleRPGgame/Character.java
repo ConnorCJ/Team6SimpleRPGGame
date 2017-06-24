@@ -168,6 +168,35 @@ public class Character {
 		else return defense;
 	}
 	
+	public int getEXP(){
+		return exp;
+	}
+	
+	public void decreaseEXP(){
+		this.exp = exp - 100;
+	}
+	
+	public void increaseAttack(){
+		this.attack += 1; 
+		this.maxHP += 2;
+		this.HP += 2;
+	}
+	public void increaseDef(){
+		this.defense += 1;
+		this.maxHP += 2;
+		this.HP += 2;
+	}
+	public void increaseSpeed(){
+		this.speed += 1;
+		this.maxHP += 2;
+		this.HP += 2;
+	}
+	public void increaseIntel(){
+		this.intelligence += 1;
+		this.maxHP += 2;
+		this.HP += 2;
+	}
+	
 	public static int findHighCharID(){ //fun fact about the "static" definer: You can use this function without instantiating a Character.
 		
 		Connection con = SQLConnection.getConnection();
