@@ -231,16 +231,16 @@ public class RPGFrame extends JFrame implements ActionListener {
 		
 		pbDistance.setMaximum(30);
 		pbDistance.setValue(15);
-		pbDistance.setBounds(93, 135, 272, 24);
+		pbDistance.setBounds(93, 170, 272, 24);
 		travelPanel.add(pbDistance);
 		
 		lblDistance.setHorizontalAlignment(SwingConstants.CENTER);
 		lblDistance.setFont(new Font("Dialog", Font.PLAIN, 13));
-		lblDistance.setBounds(120, 112, 213, 24);
+		lblDistance.setBounds(120, 147, 213, 24);
 		travelPanel.add(lblDistance);
 		
 		btnMoveOn.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		btnMoveOn.setBounds(185, 160, 89, 23);
+		btnMoveOn.setBounds(185, 195, 89, 23);
 		travelPanel.add(btnMoveOn);
 		
 		lblTraveling.setForeground(Color.BLACK);
@@ -249,7 +249,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		travelPanel.add(lblTraveling);
 		
 		lblEvent.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		lblEvent.setBounds(20, 31, 424, 75);
+		lblEvent.setBounds(20, 31, 424, 115);
 		travelPanel.add(lblEvent);
 		
 		//battlePanel
@@ -295,7 +295,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		endPanel.setLayout(null);
 
 		lblEnddesc.setHorizontalAlignment(SwingConstants.CENTER);
-		lblEnddesc.setBounds(60, 49, 330, 82);
+		lblEnddesc.setBounds(60, 49, 330, 104);
 		endPanel.add(lblEnddesc);
 
 		lblEndtop.setForeground(new Color(0, 0, 0));
@@ -305,7 +305,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		endPanel.add(lblEndtop);
 
 		btnTitleScreen.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		btnTitleScreen.setBounds(148, 151, 138, 23);
+		btnTitleScreen.setBounds(148, 170, 138, 23);
 		endPanel.add(btnTitleScreen);
 
 		//statusBar
@@ -456,10 +456,13 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if((c & ST_ITEM) > 0) //item refresh
 		{
 			cboItems.setModel(new DefaultComboBoxModel(currentChar.itemNameList()));
-			if(currentChar.inventory.size() > 0)
+			if(cboItems.getItemCount() > 0)
 			{
+				System.out.println(cboItems.getItemCount());
 				btnUseItem.setEnabled(true);
-				Item selectedItem = currentChar.inventory.get(cboItemBuy.getSelectedIndex());
+				cboItems.setSelectedIndex(-1);
+				cboItems.setSelectedIndex(0);
+				Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
 				lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
 			}
 			else
@@ -511,7 +514,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		{
 			if(currentChar.eqArmor >= 0)
 			{
-				lblArmor.setText("Armor: " + currentChar.equippedWeapon.name);
+				lblArmor.setText("Armor: " + currentChar.equippedArmor.name);
 			}
 			else
 			{
@@ -533,6 +536,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 	{
 		charList = Character.createCharacterArray();
 		cboLoad.setModel(new DefaultComboBoxModel(charList[CHAR_NAME]));
+		if(cboLoad.getItemCount() > 0) cboLoad.setSelectedIndex(0);
 		statusBar.setVisible(false);
 		tabbedPane.setSelectedIndex(0); //change later
 	}
@@ -545,9 +549,18 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(nextTown.exists()) btnNextTown.setText("Proceed to " + nextTown.name);
 		else btnNextTown.setText("Proceed to The End.");
 		cboItemBuy.setModel(new DefaultComboBoxModel(curTown.itemNameList()));
+		if(cboItemBuy.getItemCount() > 0) {
+			btnBuyItem.setEnabled(true);
+			cboItemBuy.setSelectedIndex(0);
 		Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
 		lblBuyItemDesc.setText("<html><b>" + selectedItem.name + "</b> - " + selectedItem.getTypeName() + " - "
 				+ "" + selectedItem.price + " coins<br>" + selectedItem.desc + "</html>");
+		}
+		else
+		{
+			lblBuyItemDesc.setText("");
+			btnBuyItem.setEnabled(false);
+		}
 		currentChar.HP = currentChar.maxHP;
 		currentChar.atTown = curTown.ID;
 		currentChar.saveCharacter();
@@ -586,6 +599,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			Character.deleteCharacter(Integer.parseInt(charList[CHAR_ID][cboLoad.getSelectedIndex()]));
 			charList = Character.createCharacterArray(); //after deletion, update the character list.
 			cboLoad.setModel(new DefaultComboBoxModel(charList[CHAR_NAME]));
+			if(cboLoad.getItemCount() > 0) cboLoad.setSelectedIndex(0);
 		}
 		if(c == cboLoad) //Combo box containing characters changes in selection
 		{
@@ -598,7 +612,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 			Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
 			if (currentChar.buyItem(selectedItem))
 			{
-				refreshStatus(ST_ITEM);
+				refreshStatus(ST_ITEM | ST_MONEY);
 			}
 			else
 			{
@@ -651,13 +665,25 @@ public class RPGFrame extends JFrame implements ActionListener {
 		//status bar
 		if(c == btnUseItem) //Use Item button
 		{
-			System.out.println("Use Item");
+			int usetype = currentChar.useItem(cboItems.getSelectedIndex());
+			if(usetype == 0) //healing was used
+				refreshStatus(ST_ITEM | ST_HP);
+			else if(usetype == 1) //weapon was used
+				refreshStatus(ST_ITEM | ST_WEPATK);
+			else if(usetype == 2) //armor was used
+				refreshStatus(ST_ITEM | ST_ARMDEF);
+			else if(usetype == 3) //EXP item was used
+				refreshStatus(ST_ITEM | ST_EXP);
 		}
 		if(c == cboItems) //Selection made on player's list of items
 		{
+			if(cboItems.getItemCount() > 0)
+			{
 			System.out.println("Item Combo Box - selected item: " + cboItems.getSelectedItem());
-			Item selectedItem = currentChar.inventory.get(cboItemBuy.getSelectedIndex());
+			if(cboItems.getSelectedIndex() == -1) cboItems.setSelectedIndex(0);
+			Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
 			lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
+			}
 		}
 		
 		//Upgrading: Spend 100 EXP per stat upgrade. Probably need a method to add/subtract EXP while simultaneously checking to see if EXP > 100 to enable the buttons.
