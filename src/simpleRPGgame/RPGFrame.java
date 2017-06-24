@@ -10,6 +10,27 @@ import java.sql.Statement;
 
 public class RPGFrame extends JFrame implements ActionListener {
 	int current_charID = 1;
+	Character currentChar;
+	String[][] charList; 
+	private final int CHAR_ID = 0;
+	private final int CHAR_NAME = 1;
+	private final int ST_NAME = 1;
+	private final int ST_ITEM = 2;
+	private final int ST_HP = 4;
+	private final int ST_MONEY = 8;
+	private final int ST_EXP = 16;
+	private final int ST_WEPATK = 32;
+	private final int ST_ARMDEF = 64;
+	private final int ST_SPD = 128;
+	private final int ST_INT = 256;
+	private final int ST_ALL = 511;
+			
+	Town curTown;
+	Town nextTown;
+	
+	Enemy curEnemy;
+	
+	Events eventList;
 
 	private static final long serialVersionUID = 1L;
 
@@ -32,6 +53,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 	private JLabel lblReminder = new JLabel("<html>Remember to buy items and spend your EXP before moving on... <br>(if the + buttons are available, it means you have EXP to spend.)<br>\r\nYour progress is saved when entering and leaving a town.</html>");
 	private JButton btnBuyItem = new JButton("Buy Item");
 	private JLabel lblBuyItemDesc = new JLabel("<html><b>Potion</b> - Healing - 10 Coins<br>\r\nHeals 25 HP upon use.</html>");
+	private JButton btnSaveNow = new JButton("Save now");
 	private JButton btnNextTown = new JButton("Proceed to Woodstown");
 	
 	private JPanel travelPanel = new JPanel();
@@ -87,6 +109,14 @@ public class RPGFrame extends JFrame implements ActionListener {
 	
 	public RPGFrame() {
 		super("Simple RPG Game");
+		statusBar.setVisible(false);
+		buildGUI();
+		titleScreen();
+	}
+	
+	private void buildGUI()
+	{
+		setVisible(false);
 		setSize(480,420);
         setLocation((int)getToolkit().getScreenSize().getWidth()/2-254,(int)getToolkit().getScreenSize().getHeight()/2-310);
         setResizable(false);
@@ -135,7 +165,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		btnContinueGame.setBounds(271, 134, 160, 23);
 		titlePanel.add(btnContinueGame);
 		
-		cboLoad.setModel(new DefaultComboBoxModel(createCharacterArray()));
+		cboLoad.setModel(new DefaultComboBoxModel(new String[]{}));
 		cboLoad.setBounds(118, 135, 143, 20);
 		titlePanel.add(cboLoad);
 		
@@ -167,7 +197,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		lblTownname.setBounds(27, 11, 213, 19);
 		townPanel.add(lblTownname);
 		
-		cboItemBuy.setModel(new DefaultComboBoxModel(new String[] {"Potion", "Sword"}));
+		cboItemBuy.setModel(new DefaultComboBoxModel(new String[] {}));
 		cboItemBuy.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		cboItemBuy.setBounds(104, 82, 136, 22);
 		townPanel.add(cboItemBuy);
@@ -184,11 +214,15 @@ public class RPGFrame extends JFrame implements ActionListener {
 		
 		lblBuyItemDesc.setHorizontalAlignment(SwingConstants.CENTER);
 		lblBuyItemDesc.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		lblBuyItemDesc.setBounds(104, 104, 235, 45);
+		lblBuyItemDesc.setBounds(104, 104, 235, 75);
 		townPanel.add(lblBuyItemDesc);
 		
+		btnSaveNow.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		btnSaveNow.setBounds(153, 185, 101, 23);
+		townPanel.add(btnSaveNow);
+		
 		btnNextTown.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		btnNextTown.setBounds(267, 155, 195, 23);
+		btnNextTown.setBounds(264, 185, 195, 23);
 		townPanel.add(btnNextTown);
 		
 		travelPanel.setBackground(new Color(144, 238, 144));
@@ -290,7 +324,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		statusBar.add(lblCharacterName);
 
 		cboItems.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		cboItems.setModel(new DefaultComboBoxModel(new String[] {"Potion", "Test"}));
+		cboItems.setModel(new DefaultComboBoxModel(new String[] {}));
 		cboItems.setBounds(10, 14, 136, 20);
 		statusBar.add(cboItems);
 
@@ -330,12 +364,12 @@ public class RPGFrame extends JFrame implements ActionListener {
 
 		btnUpgSpd.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgSpd.setEnabled(false);
-		btnUpgSpd.setBounds(217, 73, 20, 12);
+		btnUpgSpd.setBounds(214, 73, 20, 12);
 		statusBar.add(btnUpgSpd);
 
 		btnUpgInt.setFont(new Font("Dialog", Font.BOLD, 12));
 		btnUpgInt.setEnabled(false);
-		btnUpgInt.setBounds(217, 94, 20, 12);
+		btnUpgInt.setBounds(214, 94, 20, 12);
 		statusBar.add(btnUpgInt);
 
 		lblMoney.setForeground(new Color(128, 128, 0));
@@ -355,12 +389,12 @@ public class RPGFrame extends JFrame implements ActionListener {
 
 		lblWeapon.setForeground(new Color(128, 0, 128));
 		lblWeapon.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblWeapon.setBounds(250, 70, 105, 15);
+		lblWeapon.setBounds(239, 70, 146, 15);
 		statusBar.add(lblWeapon);
 
 		lblArmor.setForeground(new Color(0, 128, 128));
 		lblArmor.setFont(new Font("Arial", Font.BOLD | Font.ITALIC, 12));
-		lblArmor.setBounds(250, 92, 105, 15);
+		lblArmor.setBounds(239, 92, 147, 15);
 		statusBar.add(lblArmor);
 
 		lblItemDesc.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -385,6 +419,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		cboLoad.addActionListener(this);
 		//town
 		btnBuyItem.addActionListener(this);
+		btnSaveNow.addActionListener(this);
 		btnNextTown.addActionListener(this);
 		btnMoveOn.addActionListener(this);
 		cboItemBuy.addActionListener(this);
@@ -406,7 +441,119 @@ public class RPGFrame extends JFrame implements ActionListener {
 		mntmHelp.addActionListener(this);
 		mntmExit.addActionListener(this);
 		
+		tabbedPane.setEnabled(false);
+		tabbedPane.setFont(new Font("Arial", Font.PLAIN, 0));
+		
 		setVisible(true);
+	}
+	
+	private void refreshStatus(int c)
+	{ //there's no need to change everything unless int is 0 - waste of resources. The integer specifies what we need to change otherwise. Warning: bitfield.
+		if((c & ST_NAME) > 0) //name refresh
+		{
+			lblCharacterName.setText(currentChar.name);
+		}
+		if((c & ST_ITEM) > 0) //item refresh
+		{
+			cboItems.setModel(new DefaultComboBoxModel(currentChar.itemNameList()));
+			if(currentChar.inventory.size() > 0)
+			{
+				btnUseItem.setEnabled(true);
+				Item selectedItem = currentChar.inventory.get(cboItemBuy.getSelectedIndex());
+				lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
+			}
+			else
+			{
+				btnUseItem.setEnabled(false);
+				lblItemDesc.setText("");
+			}
+		}
+		if((c & ST_HP) > 0) //hp refresh
+		{
+			lblHP.setText("HP: " + currentChar.HP+"/"+currentChar.maxHP);
+		}
+		if((c & ST_MONEY) > 0) //money refresh
+		{
+			lblMoney.setText("Coins: " + currentChar.money);
+		}
+		if((c & ST_EXP) > 0) //exp refresh
+		{
+			int exp = currentChar.exp;
+			lblExp.setText("EXP: " + exp);
+			if(exp >= 100)
+			{
+				btnUpgAtk.setEnabled(true);
+				btnUpgDef.setEnabled(true);
+				btnUpgSpd.setEnabled(true);
+				btnUpgInt.setEnabled(true);
+			}
+			else 
+			{
+				btnUpgAtk.setEnabled(false);
+				btnUpgDef.setEnabled(false);
+				btnUpgSpd.setEnabled(false);
+				btnUpgInt.setEnabled(false);
+			}
+		}
+		if((c & ST_WEPATK) > 0) //weapon + attack refresh
+		{
+			if(currentChar.eqWeapon >= 0)
+			{
+				lblWeapon.setText("Weapon: " + currentChar.equippedWeapon.name);
+			}
+			else
+			{
+				lblWeapon.setText("Weapon: None");
+			}
+			lblAtk.setText("ATK: " + currentChar.getTotalAtk());
+		}
+		if((c & ST_ARMDEF) > 0) //armor + defense refresh
+		{
+			if(currentChar.eqArmor >= 0)
+			{
+				lblArmor.setText("Armor: " + currentChar.equippedWeapon.name);
+			}
+			else
+			{
+				lblArmor.setText("Armor: None");
+			}
+			lblDef.setText("DEF: " + currentChar.getTotalDef());
+		}
+		if((c & ST_SPD) > 0) //speed refresh
+		{
+			lblSpd.setText("SPD: " + currentChar.speed);
+		}
+		if((c & ST_INT) > 0) //intelligence refresh
+		{
+			lblInt.setText("INT: " + currentChar.intelligence);
+		}
+	}
+	
+	private void titleScreen()
+	{
+		charList = Character.createCharacterArray();
+		cboLoad.setModel(new DefaultComboBoxModel(charList[CHAR_NAME]));
+		statusBar.setVisible(false);
+		tabbedPane.setSelectedIndex(0); //change later
+	}
+	
+	private void enterTown(int townID)
+	{
+		curTown = new Town(townID);
+		nextTown = new Town(townID + 1);
+		lblTownname.setText("Welcome to " + curTown.name + "!");
+		if(nextTown.exists()) btnNextTown.setText("Proceed to " + nextTown.name);
+		else btnNextTown.setText("Proceed to The End.");
+		cboItemBuy.setModel(new DefaultComboBoxModel(curTown.itemNameList()));
+		Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
+		lblBuyItemDesc.setText("<html><b>" + selectedItem.name + "</b> - " + selectedItem.getTypeName() + " - "
+				+ "" + selectedItem.price + " coins<br>" + selectedItem.desc + "</html>");
+		currentChar.HP = currentChar.maxHP;
+		currentChar.atTown = curTown.ID;
+		currentChar.saveCharacter();
+		refreshStatus(ST_ALL);
+		statusBar.setVisible(true);
+		tabbedPane.setSelectedIndex(1); //change later
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -423,55 +570,22 @@ public class RPGFrame extends JFrame implements ActionListener {
 			else
 			{
 				String newName = nameField.getText();
-				Character newChar = new Character(newName, findHighCharID() + 1);
-				
-				Connection con = SQLConnection.getConnection();
-				
-				try{
-					con.setAutoCommit(false);
-					
-					Statement stmt = con.createStatement();
-					String rs = ("INSERT INTO CHARACTER (CHARID,NAME,ATTACK,DEFENSE,SPEED,INTELLIGENCE,MONEY,MAXHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
-					+ "VALUES ("+ newChar.getCharID() +", '" + newChar.getName() + "', "+ newChar.getAttack() + ", " + newChar.getDefense() + ", " + newChar.getSpeed() + ", " +
-							newChar.getIntelligence() + ", " + newChar.getMoney() + ", " + newChar.getMaxHP() + ", " + newChar.getAtTown() + ", " + 
-							newChar.getEqWeapon() + ", " + newChar.getEqArmor() + ", " + newChar.getExp() + ");");
-					
-					System.out.println(current_charID);
-					stmt.executeUpdate(rs);
-					stmt.close();
-					con.commit();
-					con.close();
-					System.out.println(newName + " added to database");
-					
-				}catch (SQLException ex) {
-					System.out.println(ex);
-				}
+				currentChar = new Character(newName, Character.findHighCharID() + 1);
+				currentChar.newCharacter(); //add the new character to the database
+				enterTown(currentChar.atTown);
 			}
 		}
 		if(c == btnContinueGame) //Continue Game button
 		{
-			System.out.println("Continue Game");
+			currentChar = new Character(Integer.parseInt(charList[CHAR_ID][cboLoad.getSelectedIndex()]));
+			System.out.println("Continuing with character " + currentChar.name);
+			enterTown(currentChar.atTown);
 		}
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
-			Connection con = SQLConnection.getConnection();
-			String nameToDelete = cboLoad.getSelectedItem().toString();
-			
-			try{
-				con.setAutoCommit(false);
-				
-				Statement stmt = con.createStatement();
-				String rs = "DELETE FROM CHARACTER WHERE NAME='"+ nameToDelete + "';";
-
-				stmt.executeUpdate(rs);
-				stmt.close();
-				con.commit();
-				con.close();
-				System.out.println(nameToDelete + " deleted from database");
-				
-			}catch (SQLException ex) {
-				System.out.println(ex);
-			}
+			Character.deleteCharacter(Integer.parseInt(charList[CHAR_ID][cboLoad.getSelectedIndex()]));
+			charList = Character.createCharacterArray(); //after deletion, update the character list.
+			cboLoad.setModel(new DefaultComboBoxModel(charList[CHAR_NAME]));
 		}
 		if(c == cboLoad) //Combo box containing characters changes in selection
 		{
@@ -481,15 +595,31 @@ public class RPGFrame extends JFrame implements ActionListener {
 		//town
 		if(c == btnBuyItem) //Buy Item
 		{
-			System.out.println("Buy Item");
+			Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
+			if (currentChar.buyItem(selectedItem))
+			{
+				refreshStatus(ST_ITEM);
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(this, "Not enough coins!");
+			}
 		}
 		if(c == btnNextTown) //Next Town button, showing something like 'Proceed to Woodstown'
 		{
+			currentChar.saveCharacter();
 			System.out.println("Next Town");
+		}
+		if(c == btnSaveNow) //Saves the character right now 
+		{
+			currentChar.saveCharacter();
 		}
 		if(c == cboItemBuy) //Item purchase combo box change in selection
 		{
 			System.out.println("Item Buy Combo Box - selected item: " + cboItemBuy.getSelectedItem());
+			Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
+			lblBuyItemDesc.setText("<html><b>" + selectedItem.name + "</b> - " + selectedItem.getTypeName() + " - "
+					+ "" + selectedItem.price + " coins<br>" + selectedItem.desc + "</html>");
 		}
 		
 		//traveling
@@ -526,6 +656,8 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(c == cboItems) //Selection made on player's list of items
 		{
 			System.out.println("Item Combo Box - selected item: " + cboItems.getSelectedItem());
+			Item selectedItem = currentChar.inventory.get(cboItemBuy.getSelectedIndex());
+			lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
 		}
 		
 		//Upgrading: Spend 100 EXP per stat upgrade. Probably need a method to add/subtract EXP while simultaneously checking to see if EXP > 100 to enable the buttons.
@@ -548,7 +680,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		
 		if(c == mntmTitle) //Menu option Title selected - this will make the player go back to the title screen, effectively quitting without exiting the program.
 		{
-			System.out.println("Menu Title Screen");
+			titleScreen();
 		}
 		if(c == mntmHelp) //How to Play thing - will bring up a window showing what the player should do.
 		{
@@ -560,60 +692,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		
 	}
-	
-	public int findHighCharID(){
-		
-		Connection con = SQLConnection.getConnection();
 
-		int high = 0;
-		
-		try{
-			con.setAutoCommit(false);
-			
-			Statement stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
-			
-			while(rs.next()){
-				high = rs.getInt("CHARID");
-			}
-			stmt.close();
-			con.commit();
-			con.close();
-			
-		}catch (SQLException ex) {
-			System.out.println(ex);
-		}
-		
-		return high;
-		
-	}
-	
-	public String[] createCharacterArray(){
-		
-		Connection con = SQLConnection.getConnection();
-		String[] listOfCharacters = new String[findHighCharID()];
-		//if (current_charID == 1)
-		//	return new String[]{};
-		
-		try{
-			con.setAutoCommit(false);
-			
-			Statement stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
-			
-			while(rs.next()){
-				String name = rs.getString("NAME");
-				int ID = rs.getInt("CHARID");
-				listOfCharacters[ID - 1] = name;
-			}
-			stmt.close();
-			con.commit();
-			con.close();
-			
-		}catch (SQLException ex) {
-			System.out.println(ex);
-		}
-		return listOfCharacters;
-	}
 
 }

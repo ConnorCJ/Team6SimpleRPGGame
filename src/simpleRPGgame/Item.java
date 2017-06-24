@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 
 public class Item {
 	public String name, desc;
@@ -42,6 +41,9 @@ public class Item {
        	 		type = 0;
        	 	}
        	 	
+	       	rs.close();
+	 		stmt.close();
+	 		con.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }

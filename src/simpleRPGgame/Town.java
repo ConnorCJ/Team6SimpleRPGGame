@@ -14,26 +14,42 @@ public class Town {
 	public Town(int townID)
 	{
 		Connection con = SQLConnection.getConnection();
-		String sql = "SELECT * FROM Town WHERE TownID = " + Integer.toString(townID);
 
         try
         	{
         	con.setAutoCommit(false);
        	 	Statement stmt = con.createStatement();
-       	 	ResultSet rs    = stmt.executeQuery(sql);
+       	 	ResultSet rs    = stmt.executeQuery("SELECT * FROM Town WHERE TownID = " + Integer.toString(townID));
             
-       	 	if(rs.absolute(1))
-       	 	{
+       	 
                 name = rs.getString("TownName");
                 ID = rs.getInt("TownID");
-                items = getItemsInShop();
-       	 	}
-       	 	else //This is a means of detecting if there's no new town ahead - meaning the player is approaching The End, where the boss lies. Check to see if ID == -1.
-       	 	{
-       	 		name = "NONEXISTENTTOWN";
-       	 		ID = -1;
-       	 	}
+                if(rs.wasNull())
+                {
+                	name = "NOTOWN";
+                	ID = -1;
+                }
+                else
+                {
+                items = new ArrayList<Item>(10);
+                rs = stmt.executeQuery("SELECT Item.* FROM Item JOIN ItemInShop ON Item.ItemID = ItemInShop.ItemID WHERE TownID = " + Integer.toString(ID));
                 
+                // loop through the result set
+                while (rs.next()) 
+                	{
+                    items.add(new Item(
+                    		rs.getInt("ItemID"),
+                    		rs.getString("ItemName"),
+                    		rs.getString("ItemDesc"),
+                    		rs.getInt("Value"),
+                    		rs.getInt("ItemType"),
+                    		rs.getInt("Price"))
+                    		);
+                	}
+                }
+			rs.close();
+			stmt.close();
+			con.close();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -46,33 +62,20 @@ public class Town {
 		else return false;
 	}
 	
-	public ArrayList<Item> getItemsInShop()
+	public int getItemID(int index)
 	{
-		String sql = "SELECT Item.* FROM Item JOIN ItemInShop ON Item.ItemID = ItemInShop.ItemID WHERE TownID = " + Integer.toString(ID);
-		Connection con = SQLConnection.getConnection();
-		ArrayList<Item> i = new ArrayList<Item>(20);
+		return items.get(index).ID;
+	}
+	
+	public String[] itemNameList() //for placement in a cbolist
+	{
+		String[] names = new String[items.size()]; 
 		
-		try
-    	{
-    	con.setAutoCommit(false);
-   	 	Statement stmt = con.createStatement();
-   	 	ResultSet rs    = stmt.executeQuery(sql);
-        
-        // loop through the result set
-        while (rs.next()) {
-            i.add(new Item(
-            		rs.getInt("ItemID"),
-            		rs.getString("ItemName"),
-            		rs.getString("ItemDesc"),
-            		rs.getInt("Value"),
-            		rs.getInt("ItemType"),
-            		rs.getInt("Price"))
-            		);
-        }
-	    } catch (SQLException e) {
-	        System.out.println(e.getMessage());
-	    }
+		for(int i = 0; i < items.size(); ++i)
+		{
+			names[i] = items.get(i).name;
+		}
 		
-		return i;
+		return names;
 	}
 }

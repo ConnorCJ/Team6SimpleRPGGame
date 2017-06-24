@@ -1,11 +1,10 @@
 package simpleRPGgame;
 import java.sql.*;
-import javax.swing.*;
 
 public class SQLConnection {
 		
 	public static Connection getConnection(){
-			
+		
 		try{
 		
 			Class.forName("org.sqlite.JDBC");
