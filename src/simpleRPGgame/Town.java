@@ -19,8 +19,9 @@ public class Town {
         	{
         	con.setAutoCommit(false);
        	 	Statement stmt = con.createStatement();
-       	 	ResultSet rs  = stmt.executeQuery("SELECT COUNT(townID) AS Test FROM Town WHERE townID = " + townID + ";");
-       	 	
+       	 	String sql;
+       	 	ResultSet rs  = stmt.executeQuery(sql = "SELECT COUNT(townID) AS Test FROM Town WHERE townID = " + townID + ";");
+       	 	System.out.println(sql);
                 if(rs.getInt("Test") <= 0)
                 {
                 	name = "NOTOWN";
@@ -28,13 +29,13 @@ public class Town {
                 }
                 else
                 {
-                rs = stmt.executeQuery("SELECT * FROM Town WHERE TownID = " + Integer.toString(townID));
-                    
+                rs = stmt.executeQuery(sql = "SELECT * FROM Town WHERE TownID = " + Integer.toString(townID));
+                System.out.println(sql);
                 name = rs.getString("TownName");
                 ID = rs.getInt("TownID");
                 items = new ArrayList<Item>(10);
-                rs = stmt.executeQuery("SELECT Item.* FROM Item JOIN ItemInShop ON Item.ItemID = ItemInShop.ItemID WHERE TownID = " + Integer.toString(ID));
-                
+                rs = stmt.executeQuery(sql ="SELECT Item.* FROM Item JOIN ItemInShop ON Item.ItemID = ItemInShop.ItemID WHERE TownID = " + Integer.toString(ID));
+                System.out.println(sql);
                 // loop through the result set
                 while (rs.next()) 
                 	{
@@ -78,5 +79,10 @@ public class Town {
 		}
 		
 		return names;
+	}
+	
+	public String toString()
+	{
+		return name;
 	}
 }

@@ -3,14 +3,10 @@ package simpleRPGgame;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 public class RPGFrame extends JFrame implements ActionListener {
 	int current_charID = 1;
-	Character currentChar;
+	Character curChar;
 	String[][] charList; 
 	private final int CHAR_ID = 0;
 	private final int CHAR_NAME = 1;
@@ -28,9 +24,10 @@ public class RPGFrame extends JFrame implements ActionListener {
 	Town curTown;
 	Town nextTown;
 	
-	Enemy curEnemy;
+	Adventuring ad;
 	
-	Events eventList;
+	boolean playerDefeated = false;
+	boolean enemyEncounter = false;
 
 	private static final long serialVersionUID = 1L;
 
@@ -99,7 +96,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 	private JMenuBar menuBar = new JMenuBar();		
 	private JMenu mnGame = new JMenu("Game");		
 	private JMenuItem mntmTitle = new JMenuItem("Go to Title");		
-	private JMenuItem mntmHelp = new JMenuItem("Help");		
 	private JMenuItem mntmExit = new JMenuItem("Exit");
 	
 	
@@ -240,7 +236,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		travelPanel.add(lblDistance);
 		
 		btnMoveOn.setFont(new Font("Tahoma", Font.PLAIN, 12));
-		btnMoveOn.setBounds(185, 195, 89, 23);
+		btnMoveOn.setBounds(162, 195, 138, 23);
 		travelPanel.add(btnMoveOn);
 		
 		lblTraveling.setForeground(Color.BLACK);
@@ -408,8 +404,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 
 		mnGame.add(mntmTitle);
 
-		mnGame.add(mntmHelp);
-
 		mnGame.add(mntmExit);
 		
 		//title
@@ -438,7 +432,6 @@ public class RPGFrame extends JFrame implements ActionListener {
 		cboItems.addActionListener(this);
 		
 		mntmTitle.addActionListener(this);
-		mntmHelp.addActionListener(this);
 		mntmExit.addActionListener(this);
 		
 		tabbedPane.setEnabled(false);
@@ -451,18 +444,17 @@ public class RPGFrame extends JFrame implements ActionListener {
 	{ //there's no need to change everything unless int is 0 - waste of resources. The integer specifies what we need to change otherwise. Warning: bitfield.
 		if((c & ST_NAME) > 0) //name refresh
 		{
-			lblCharacterName.setText(currentChar.name);
+			lblCharacterName.setText(curChar.name);
 		}
 		if((c & ST_ITEM) > 0) //item refresh
 		{
-			cboItems.setModel(new DefaultComboBoxModel(currentChar.itemNameList()));
+			cboItems.setModel(new DefaultComboBoxModel(curChar.itemNameList()));
 			if(cboItems.getItemCount() > 0)
 			{
-				System.out.println(cboItems.getItemCount());
 				btnUseItem.setEnabled(true);
 				cboItems.setSelectedIndex(-1);
 				cboItems.setSelectedIndex(0);
-				Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
+				Item selectedItem = curChar.inventory.get(cboItems.getSelectedIndex());
 				lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
 			}
 			else
@@ -473,17 +465,17 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		if((c & ST_HP) > 0) //hp refresh
 		{
-			lblHP.setText("HP: " + currentChar.HP+"/"+currentChar.maxHP);
+			lblHP.setText("HP: " + curChar.HP+"/"+curChar.maxHP);
 		}
 		if((c & ST_MONEY) > 0) //money refresh
 		{
-			lblMoney.setText("Coins: " + currentChar.money);
+			lblMoney.setText("Coins: " + curChar.money);
 		}
 		if((c & ST_EXP) > 0) //exp refresh
 		{
-			int exp = currentChar.exp;
+			int exp = curChar.exp;
 			lblExp.setText("EXP: " + exp);
-			if(exp >= 100)
+			if(exp >= 50)
 			{
 				btnUpgAtk.setEnabled(true);
 				btnUpgDef.setEnabled(true);
@@ -500,35 +492,35 @@ public class RPGFrame extends JFrame implements ActionListener {
 		}
 		if((c & ST_WEPATK) > 0) //weapon + attack refresh
 		{
-			if(currentChar.eqWeapon >= 0)
+			if(curChar.eqWeapon >= 0)
 			{
-				lblWeapon.setText("Weapon: " + currentChar.equippedWeapon.name);
+				lblWeapon.setText("Weapon: " + curChar.equippedWeapon.name);
 			}
 			else
 			{
 				lblWeapon.setText("Weapon: None");
 			}
-			lblAtk.setText("ATK: " + currentChar.getTotalAtk());
+			lblAtk.setText("ATK: " + curChar.getTotalAtk());
 		}
 		if((c & ST_ARMDEF) > 0) //armor + defense refresh
 		{
-			if(currentChar.eqArmor >= 0)
+			if(curChar.eqArmor >= 0)
 			{
-				lblArmor.setText("Armor: " + currentChar.equippedArmor.name);
+				lblArmor.setText("Armor: " + curChar.equippedArmor.name);
 			}
 			else
 			{
 				lblArmor.setText("Armor: None");
 			}
-			lblDef.setText("DEF: " + currentChar.getTotalDef());
+			lblDef.setText("DEF: " + curChar.getTotalDef());
 		}
 		if((c & ST_SPD) > 0) //speed refresh
 		{
-			lblSpd.setText("SPD: " + currentChar.speed);
+			lblSpd.setText("SPD: " + curChar.speed);
 		}
 		if((c & ST_INT) > 0) //intelligence refresh
 		{
-			lblInt.setText("INT: " + currentChar.intelligence);
+			lblInt.setText("INT: " + curChar.intelligence);
 		}
 	}
 	
@@ -539,6 +531,7 @@ public class RPGFrame extends JFrame implements ActionListener {
 		if(cboLoad.getItemCount() > 0) cboLoad.setSelectedIndex(0);
 		statusBar.setVisible(false);
 		tabbedPane.setSelectedIndex(0); //change later
+		playerDefeated = false;
 	}
 	
 	private void enterTown(int townID)
@@ -561,12 +554,78 @@ public class RPGFrame extends JFrame implements ActionListener {
 			lblBuyItemDesc.setText("");
 			btnBuyItem.setEnabled(false);
 		}
-		currentChar.HP = currentChar.maxHP;
-		currentChar.atTown = curTown.ID;
-		currentChar.saveCharacter();
+		curChar.HP = curChar.maxHP;
+		curChar.atTown = curTown.ID;
+		curChar.saveCharacter();
 		refreshStatus(ST_ALL);
 		statusBar.setVisible(true);
 		tabbedPane.setSelectedIndex(1); //change later
+	}
+	
+	private void enterTraveling() //called when starting to enter traveling
+	{
+		ad = new Adventuring(curTown.ID);
+		if(nextTown.exists()) {
+			lblTraveling.setText("Traveling to " + nextTown.name + "...");
+			lblDistance.setText(ad.distRemaining() + " kilometers left to " + nextTown.name);
+		}
+		else {
+			lblTraveling.setText("Traveling to the end...");
+			lblDistance.setText(ad.distRemaining() + " kilometers left to The End");
+			ad.lastPath = true;
+		}
+		lblEvent.setText("<html>" + curChar.name + " sets out for the next location.<br><br>(Click 'Move on' to travel and encounter events along the way.)</html>");
+		pbDistance.setMaximum(ad.maxDist);
+		pbDistance.setValue(ad.dist);
+		btnMoveOn.setText("Move on");
+		tabbedPane.setSelectedIndex(2);
+	}
+	
+	private void returnTraveling(boolean escaped) //called after defeating a foe
+	{
+		if(escaped) lblEvent.setText("<html>"+ curChar.name + " had ran away from their foe.</html>");
+			else lblEvent.setText("<html>"+ curChar.name + " has defeated their foe, and is ready to move on.</html>");
+		btnMoveOn.setText("Move on");
+		tabbedPane.setSelectedIndex(2);
+	}
+	
+	private void encounterEnemy()
+	{
+		ad.foe.HP = ad.foe.maxHP;
+		lblEnemyName.setText(ad.foe.name);
+		lblenemyHP.setText("HP: " + ad.foe.HP + "/" + ad.foe.maxHP);
+		lblPlayerAction.setText("<html>" + curChar.name + " readies for a fight.</html>");
+		lblEnemyAction.setText("<html>" + ad.foe.name + " draws near!");
+		btnAttack.setEnabled(true);
+		btnDefend.setEnabled(true);
+		if(ad.foe.isBoss) {
+			btnEnd.setEnabled(false);
+			btnEnd.setText("Defeat boss!");
+		}
+		else {
+			btnEnd.setEnabled(true);
+			btnEnd.setText("Run Away");
+		}
+		
+		tabbedPane.setSelectedIndex(3);
+	}
+	
+	private void endBattle(String msg)
+	{
+		btnAttack.setEnabled(false);
+		btnDefend.setEnabled(false);
+		btnEnd.setEnabled(true);
+		btnEnd.setText(msg);
+	}
+	
+	private void enterEnd(boolean won, String msg)
+	{
+		if(won) lblEndtop.setText("Victory!");
+		else lblEndtop.setText("Game over.");
+		
+		lblEnddesc.setText("<html>"+msg+"</html>");
+		
+		tabbedPane.setSelectedIndex(4);
 	}
 	
 	public void actionPerformed(ActionEvent e)
@@ -583,16 +642,17 @@ public class RPGFrame extends JFrame implements ActionListener {
 			else
 			{
 				String newName = nameField.getText();
-				currentChar = new Character(newName, Character.findHighCharID() + 1);
-				currentChar.newCharacter(); //add the new character to the database
-				enterTown(currentChar.atTown);
+				curChar = new Character(newName, Character.findHighCharID() + 1);
+				curChar.newCharacter(); //add the new character to the database
+				enterTown(curChar.atTown);
 			}
+			return;
 		}
 		if(c == btnContinueGame) //Continue Game button
 		{
-			currentChar = new Character(Integer.parseInt(charList[CHAR_ID][cboLoad.getSelectedIndex()]));
-			System.out.println("Continuing with character " + currentChar.name);
-			enterTown(currentChar.atTown);
+			curChar = new Character(Integer.parseInt(charList[CHAR_ID][cboLoad.getSelectedIndex()]));
+			enterTown(curChar.atTown);
+			return;
 		}
 		if(c == btnDeleteCharacter) //Delete Character button
 		{
@@ -600,17 +660,18 @@ public class RPGFrame extends JFrame implements ActionListener {
 			charList = Character.createCharacterArray(); //after deletion, update the character list.
 			cboLoad.setModel(new DefaultComboBoxModel(charList[CHAR_NAME]));
 			if(cboLoad.getItemCount() > 0) cboLoad.setSelectedIndex(0);
+			return;
 		}
 		if(c == cboLoad) //Combo box containing characters changes in selection
 		{
-			System.out.println("Load Combo Box - selected item: " + cboLoad.getSelectedItem());
+			return;
 		}
 		
 		//town
 		if(c == btnBuyItem) //Buy Item
 		{
 			Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
-			if (currentChar.buyItem(selectedItem))
+			if (curChar.buyItem(selectedItem))
 			{
 				refreshStatus(ST_ITEM | ST_MONEY);
 			}
@@ -618,54 +679,333 @@ public class RPGFrame extends JFrame implements ActionListener {
 			{
 				JOptionPane.showMessageDialog(this, "Not enough coins!");
 			}
+			return;
 		}
 		if(c == btnNextTown) //Next Town button, showing something like 'Proceed to Woodstown'
 		{
-			currentChar.saveCharacter();
-			System.out.println("Next Town");
+			curChar.saveCharacter();
+			enterTraveling();
+			return;
 		}
 		if(c == btnSaveNow) //Saves the character right now 
 		{
-			currentChar.saveCharacter();
+			curChar.saveCharacter();
+			return;
 		}
 		if(c == cboItemBuy) //Item purchase combo box change in selection
 		{
-			System.out.println("Item Buy Combo Box - selected item: " + cboItemBuy.getSelectedItem());
 			Item selectedItem = curTown.items.get(cboItemBuy.getSelectedIndex());
 			lblBuyItemDesc.setText("<html><b>" + selectedItem.name + "</b> - " + selectedItem.getTypeName() + " - "
 					+ "" + selectedItem.price + " coins<br>" + selectedItem.desc + "</html>");
+			return;
 		}
 		
 		//traveling
 		if(c == btnMoveOn) //Move On button - advance one kilometer, trigger a possible event. Or if kilometers traveled equal to max kilometers, 
 		{				   //the next press will bring them into the town. The button probably showing "Enter Town" at that point.
-			System.out.println("Move On");
+			
+			if(playerDefeated)
+			{
+				enterEnd(false,curChar.name + " could not endure the harsh environment around them, and thus, was unable to continue.");
+				return;
+			}
+			
+			if(ad.arrived)
+			{
+				if(ad.lastPath)
+				{
+					ad.summonBoss();
+					encounterEnemy();
+				}
+				else
+				{
+					enterTown(nextTown.ID);
+				}
+				return;
+			}
+			
+			if(enemyEncounter)
+			{
+				ad.summonEnemy();
+				encounterEnemy();
+				enemyEncounter = false;
+				return;
+			}
+			
+			ad.advance();
+			enemyEncounter = (ad.ev.type == 1);
+			pbDistance.setValue(ad.dist);
+			if(nextTown.exists()) {
+				lblDistance.setText(ad.distRemaining() + " kilometers left to " + nextTown.name);
+			}
+			else {
+				lblDistance.setText(ad.distRemaining() + " kilometers left to The End");
+			}
+			
+			
+			if(ad.dist == ad.maxDist)
+			{
+				ad.arrived = true;
+				if(ad.lastPath)
+				{
+					lblEvent.setText("<html>" + curChar.name + 
+							" has reached the end.<br><br>There before them, awaits the final foe. They are ready.<br><br>The fight begins.</html>");
+					btnMoveOn.setText("Fight!");
+				}
+				else
+				{
+					lblEvent.setText("<html>" + curChar.name + " has arrived at " + nextTown.name + "!</html>");
+					btnMoveOn.setText("Enter town");
+					enemyEncounter = false;
+				}
+				return;
+			}
+			
+			String eventMes = "<html>" + ad.ev.desc + "<br><br>";
+			if(ad.ev.winEvent(curChar)) 
+			{
+				
+				eventMes += ad.ev.sucdesc + "</html>";
+				if(ad.ev.type == 1) //monster encounter
+				{
+					btnMoveOn.setText("Fight!");
+				}
+				else if(ad.ev.type == 2)
+				{
+					curChar.money += ad.ev.value;
+					refreshStatus(ST_MONEY);
+				}
+				else if(ad.ev.type == 4)
+				{
+					curChar.exp += ad.ev.value;
+					refreshStatus(ST_EXP);
+				}
+				else if(ad.ev.type == 5)
+				{
+					curChar.heal(ad.ev.value);
+					refreshStatus(ST_HP);
+				}
+				else if(ad.ev.type == 7)
+				{
+					curChar.inventory.add(new Item(ad.ev.value));
+					refreshStatus(ST_ITEM);
+				}
+			}
+			else
+			{
+				eventMes += ad.ev.faildesc + "</html>";
+				if(ad.ev.type == 3)
+				{
+					curChar.loseMoney(ad.ev.value);
+					refreshStatus(ST_MONEY);
+				}
+				if(ad.ev.type == 6)
+				{
+					if(curChar.damage(ad.ev.value)) //possible to die this way. If true, it means HP reached 0.
+					{
+						playerDefeated = true;
+						btnMoveOn.setText("Game Over!");
+						btnUseItem.setEnabled(false); //no, you're still dead even if you were able to use an item.
+					}
+					refreshStatus(ST_HP);
+				}
+			}
+			
+			eventMes = eventMes.replaceAll("&n", curChar.name);
+			
+			lblEvent.setText(eventMes);
+			
+			
+			return;
 		}
 		
 		//enemy
 		if(c == btnAttack) //Attack button. Will be grayed out when the battle ends.
 		{
-			System.out.println("Attack");
+			Damage dmg = ad.calcPlrDamage(curChar);
+			boolean enemyDefeat = false;
+			String mes = "<html>" + curChar.name;
+			if((dmg.flags & Damage.DMG_DEFBONUS) > 0)
+				mes += " counterattacks! ";
+			else mes += " attacks! ";
+			
+			if((dmg.flags & Damage.DMG_DODGE) > 0)
+			{
+				mes += ad.foe.name + " dodges.</html>";
+			}
+			else
+			{
+				if((dmg.flags & Damage.DMG_CRIT) > 0)
+					mes += "Critical hit! ";
+				
+				mes += ad.foe.name + " takes " + dmg.damage + " damage.</html>";
+				enemyDefeat = ad.foe.damage(dmg.damage); //detects if the enemy is defeated in this move or not as well.
+				lblenemyHP.setText("HP: " + ad.foe.HP + "/" + ad.foe.maxHP);
+			}
+			lblPlayerAction.setText(mes);
+			
+			mes = "<html>" + ad.foe.name;
+			if(enemyDefeat)
+			{
+				mes += " has been defeated. ";
+				if(ad.foe.isBoss)
+				{
+					mes += " It's all over. Victory belongs to " + curChar.name + ".</html>";
+					curChar.exp += ad.foe.exp;
+					curChar.money += ad.foe.exp;
+					endBattle("Victory!");
+				}
+				else
+				{
+					mes += ad.foe.exp + " EXP, " + ad.foe.money + " coins gained.</html>";
+					curChar.exp += ad.foe.exp;
+					curChar.money += ad.foe.exp;
+					refreshStatus(ST_EXP | ST_MONEY);
+					endBattle("Continue");
+				}
+			}
+			else
+			{
+				dmg = ad.calcEnemyDamage(curChar);
+				mes += " attacks! ";
+				
+				if((dmg.flags & Damage.DMG_DODGE) > 0)
+				{
+					mes += curChar.name + " dodges.</html>";
+				}
+				else
+				{
+					if((dmg.flags & Damage.DMG_CRIT) > 0)
+						mes += "Critical hit! ";
+					if((dmg.flags & Damage.DMG_DEFBONUS) > 0)
+						mes += curChar.name + ", guarded, takes " + dmg.damage + " damage.";
+					else mes += curChar.name + " takes " + dmg.damage + " damage.";
+					if(playerDefeated = curChar.damage(dmg.damage))
+					{
+						mes += " " + curChar.name + " has been defeated!</html>";
+						endBattle("Game Over");
+					}
+					else
+					{
+						mes += "</html>";
+					}
+					refreshStatus(ST_HP);
+				}
+				
+				
+			}
+			
+			lblEnemyAction.setText(mes);
+			return;
 		}
 		if(c == btnDefend) //Defend button. Will be grayed out when the battle ends.
 		{
-			System.out.println("Defend");
+			ad.plrDefended = true;
+			lblPlayerAction.setText("<html>" + curChar.name + " defends and prepares...</html>");
+			
+			String mes = "<html>" + ad.foe.name;
+				Damage dmg = ad.calcEnemyDamage(curChar);
+				mes += " attacks! ";
+				
+				if((dmg.flags & Damage.DMG_DODGE) > 0)
+				{
+					mes += curChar.name + " dodges.</html>";
+				}
+				else
+				{
+					if((dmg.flags & Damage.DMG_CRIT) > 0)
+						mes += "Critical hit! ";
+					if((dmg.flags & Damage.DMG_DEFBONUS) > 0)
+						mes += curChar.name + ", guarded, takes " + dmg.damage + " damage.";
+					else mes += curChar.name + " takes " + dmg.damage + " damage.";
+					if(playerDefeated = curChar.damage(dmg.damage))
+					{
+						mes += curChar.name + " has been defeated!</html>";
+						endBattle("Game Over");
+					}
+					else
+					{
+						mes += "</html>";
+					}
+					refreshStatus(ST_HP);
+				}
+				lblEnemyAction.setText(mes);
+			return;
 		}
 		if(c == btnEnd) //This can either be shown as "Run away" or "Move on" - The first option is a random chance to escape back to traveling,
 		{				//and the other is given when the player defeats the enemy.
-			System.out.println("End Battle");
+			
+			if(playerDefeated)
+			{
+				enterEnd(false,curChar.name + " was defeated by " + ad.foe.name + ", and thus can't continue in their endeavors.");
+			}
+			else if(ad.foe.HP <= 0)
+			{
+				if(ad.foe.isBoss)
+				{
+					enterEnd(true,curChar.name + " has defeated the evil foe " + ad.foe.name + 
+							". Their victory shall be remembered for days to come by the people of this simple RPG.");
+				}
+				else
+				{
+					returnTraveling(false);
+				}
+			}
+			else if(ad.plrEscaped)
+			{
+				returnTraveling(true);
+			}
+			else if(ad.plrRun(curChar))
+			{
+				endBattle("Continue");
+				lblPlayerAction.setText("<html>" + curChar.name + " attempts to run away! They are successful!</html>");
+				lblEnemyAction.setText("<html>" + ad.foe.name + " could not catch up.</html>");
+			}
+			else
+			{
+				lblPlayerAction.setText("<html>" + curChar.name + " attempts to run away! They failed.</html>");
+				String mes = "<html>" + ad.foe.name;
+				Damage dmg = ad.calcEnemyDamage(curChar);
+				mes += " attacks! ";
+				
+				if((dmg.flags & Damage.DMG_DODGE) > 0)
+				{
+					mes += curChar.name + " dodges.</html>";
+				}
+				else
+				{
+					if((dmg.flags & Damage.DMG_CRIT) > 0)
+						mes += "Critical hit! ";
+					if((dmg.flags & Damage.DMG_DEFBONUS) > 0)
+						mes += curChar.name + ", guarded, takes " + dmg.damage + " damage.";
+					else mes += curChar.name + " takes " + dmg.damage + " damage.";
+					if(playerDefeated = curChar.damage(dmg.damage))
+					{
+						mes += curChar.name + " has been defeated!</html>";
+						endBattle("Game Over");
+					}
+					else
+					{
+						mes += "</html>";
+					}
+					refreshStatus(ST_HP);
+				}
+				lblEnemyAction.setText(mes);
+			}
+			return;
 		}
 		
 		//end
 		if(c == btnTitleScreen) //Button to go back to the title screen.
 		{
-			System.out.println("Title Screen");
+			titleScreen();
+			return;
 		}
 		
 		//status bar
 		if(c == btnUseItem) //Use Item button
 		{
-			int usetype = currentChar.useItem(cboItems.getSelectedIndex());
+			int usetype = curChar.useItem(cboItems.getSelectedIndex());
 			if(usetype == 0) //healing was used
 				refreshStatus(ST_ITEM | ST_HP);
 			else if(usetype == 1) //weapon was used
@@ -674,79 +1014,82 @@ public class RPGFrame extends JFrame implements ActionListener {
 				refreshStatus(ST_ITEM | ST_ARMDEF);
 			else if(usetype == 3) //EXP item was used
 				refreshStatus(ST_ITEM | ST_EXP);
+			return;
 		}
 		if(c == cboItems) //Selection made on player's list of items
 		{
 			if(cboItems.getItemCount() > 0)
 			{
-				System.out.println("Item Combo Box - selected item: " + cboItems.getSelectedItem());
 				if(cboItems.getSelectedIndex() == -1) cboItems.setSelectedIndex(0);
-				Item selectedItem = currentChar.inventory.get(cboItems.getSelectedIndex());
+				Item selectedItem = curChar.inventory.get(cboItems.getSelectedIndex());
 				lblItemDesc.setText("<html><b>"+selectedItem.name+"</b> - "+selectedItem.desc);
 			}
+			return;
 		}
 		
 		//Upgrading: Spend 100 EXP per stat upgrade. Probably need a method to add/subtract EXP while simultaneously checking to see if EXP > 100 to enable the buttons.
 		if(c == btnUpgAtk) //Upgrade attack power
 		{
-			if(!checkEXP(currentChar))
-				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			if(!checkEXP(curChar))
+				JOptionPane.showMessageDialog(this, "50 EXP Required!");
 				
 			else{
-				currentChar.increaseAttack();
-				currentChar.decreaseEXP();
+				curChar.increaseAttack();
+				curChar.decreaseEXP();
 				refreshStatus(ST_EXP | ST_HP | ST_WEPATK);
 			}
+			return;
 		}
 		if(c == btnUpgDef) //Upgrade defenses
 		{
-			if(!checkEXP(currentChar))
-				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			if(!checkEXP(curChar))
+				JOptionPane.showMessageDialog(this, "50 EXP Required!");
 			
 			else{
-				currentChar.increaseDef();
-				currentChar.decreaseEXP();
+				curChar.increaseDef();
+				curChar.decreaseEXP();
 				refreshStatus(ST_EXP | ST_HP | ST_ARMDEF);
 			}
+			return;
 		}
 		if(c == btnUpgSpd) //Upgrade speed
 		{
-			if(!checkEXP(currentChar))
-				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			if(!checkEXP(curChar))
+				JOptionPane.showMessageDialog(this, "50 EXP Required!");
 			else{
-				currentChar.increaseSpeed();
-				currentChar.decreaseEXP();
+				curChar.increaseSpeed();
+				curChar.decreaseEXP();
 				refreshStatus(ST_EXP | ST_HP | ST_SPD);
 			}
+			return;
 		}
 		if(c == btnUpgInt) //Upgrade intellect
 		{
-			if(!checkEXP(currentChar))
-				JOptionPane.showMessageDialog(this, "100 EXP Required!");
+			if(!checkEXP(curChar))
+				JOptionPane.showMessageDialog(this, "50 EXP Required!");
 			else{
-				currentChar.increaseIntel();
-				currentChar.decreaseEXP();
+				curChar.increaseIntel();
+				curChar.decreaseEXP();
 				refreshStatus(ST_EXP | ST_HP | ST_INT);
 			}
+			return;
 		}
 		
 		if(c == mntmTitle) //Menu option Title selected - this will make the player go back to the title screen, effectively quitting without exiting the program.
 		{
 			titleScreen();
-		}
-		if(c == mntmHelp) //How to Play thing - will bring up a window showing what the player should do.
-		{
-			System.out.println("Menu Help");
+			return;
 		}
 		if(c == mntmExit) //Obviously quits the program.
 		{
 			System.exit(0);
+			return;
 		}
 		
 	}
 	
 	public boolean checkEXP(Character c){
-		if(c.getEXP() >= 100)
+		if(c.getEXP() >= 50)
 			return true;
 		return false;
 	}

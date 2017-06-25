@@ -18,11 +18,13 @@ public class Item {
         	{
         	con.setAutoCommit(false);
        	 	Statement stmt = con.createStatement();
-    	 	ResultSet rs  	= stmt.executeQuery("SELECT COUNT(itemID) AS Test FROM Item WHERE itemID = " + itemID + ";");
-
+       	 	String sql;
+    	 	ResultSet rs  	= stmt.executeQuery(sql = "SELECT COUNT(itemID) AS Test FROM Item WHERE itemID = " + itemID + ";");
+    	 	System.out.println(sql);
        	 	if(rs.getInt("Test") > 0)
     	 	{
-       	 		rs    = stmt.executeQuery("SELECT * FROM Item WHERE ItemID = " + Integer.toString(itemID));
+       	 		rs    = stmt.executeQuery(sql = "SELECT * FROM Item WHERE ItemID = " + Integer.toString(itemID));
+       	 		System.out.println(sql);
                 name = rs.getString("ItemName");
                 desc = rs.getString("ItemDesc");
                 ID = rs.getInt("ItemID");
@@ -63,6 +65,11 @@ public class Item {
 	{
 		String itemTypes[] = {"Healing","Weapon","Armor","EXP Gain"};
 		return itemTypes[type];
+	}
+	
+	public String toString()
+	{
+		return name;
 	}
 	
 

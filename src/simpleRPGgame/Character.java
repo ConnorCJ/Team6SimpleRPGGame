@@ -34,7 +34,9 @@ public class Character {
 			con.setAutoCommit(false);
 			
 			Statement stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER WHERE charID = '" + charID + "'");
+			String sql;
+			ResultSet rs = stmt.executeQuery(sql = "SELECT * FROM CHARACTER WHERE charID = '" + charID + "'");
+			System.out.println(sql);
 			
 			this.name = rs.getString("Name");
 			this.ID = rs.getInt("charID");
@@ -66,6 +68,7 @@ public class Character {
 	public ArrayList<Item> getItemsOnChar()
 	{
 		String sql = "SELECT Item.* FROM Item JOIN ItemOnChar ON Item.ItemID = ItemOnChar.ItemID WHERE CharID = " + Integer.toString(ID);
+		System.out.println(sql);
 		Connection con = SQLConnection.getConnection();
 		ArrayList<Item> i = new ArrayList<Item>(20);
 		
@@ -126,8 +129,7 @@ public class Character {
 		int iType = useItem.type;
 		if(iType == 0) //healing item
 		{
-			HP += useItem.value;
-			if(HP > maxHP) HP = maxHP;
+			heal(useItem.value);
 		}
 		else if(iType == 1) //weapon equipment
 		{
@@ -142,7 +144,7 @@ public class Character {
 		{
 			if(eqArmor >= 0)
 			{
-				inventory.add(equippedWeapon);
+				inventory.add(equippedArmor);
 			}
 			equippedArmor = useItem;
 			eqArmor = equippedArmor.ID;
@@ -173,7 +175,7 @@ public class Character {
 	}
 	
 	public void decreaseEXP(){
-		this.exp = exp - 100;
+		this.exp = exp - 50;
 	}
 	
 	public void increaseAttack(){
@@ -197,6 +199,25 @@ public class Character {
 		this.HP += 2;
 	}
 	
+	public boolean damage(int dmg) //subtract HP from character without going below 0. returns true if character reaches 0.
+	{
+		HP -= dmg;
+		if(HP < 0) HP = 0;
+		return HP <= 0;
+	}
+	
+	public void heal(int hl) //adds HP without going above maxHP
+	{
+		HP += hl;
+		if(HP > maxHP) HP = maxHP;
+	}
+	
+	public void loseMoney(int amount)
+	{
+		money -= amount;
+		if(money < 0) money = 0;
+	}
+	
 	public static int findHighCharID(){ //fun fact about the "static" definer: You can use this function without instantiating a Character.
 		
 		Connection con = SQLConnection.getConnection();
@@ -207,7 +228,9 @@ public class Character {
 			con.setAutoCommit(false);
 			
 			Statement stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
+			String sql;
+			ResultSet rs = stmt.executeQuery(sql = "SELECT * FROM CHARACTER;");
+			System.out.println(sql);
 			
 			while(rs.next()){
 				high = rs.getInt("CharID");
@@ -225,29 +248,37 @@ public class Character {
 	public static String[][] createCharacterArray(){
 		
 		Connection con = SQLConnection.getConnection();
-		String[][] listOfCharacters = new String[2][Character.findHighCharID()];
+		String[][] listOfCharacters;
 		
 		try{
 			con.setAutoCommit(false);
 			
 			Statement stmt = con.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT * FROM CHARACTER;");
-			
+			String sql;
+			ResultSet rs = stmt.executeQuery(sql = "SELECT COUNT(CharID) AS 'Check' FROM Character;");
+			System.out.println(sql);
+			listOfCharacters = new String[2][rs.getInt("Check")];
+			rs = stmt.executeQuery(sql = "SELECT * FROM CHARACTER;");
+			System.out.println(sql);
+			int i = 0;
 			while(rs.next()){
 				String name = rs.getString("Name");
 				int ID = rs.getInt("CharID");
-				listOfCharacters[0][ID - 1] = Integer.toString(ID);
-				listOfCharacters[1][ID - 1] = name;
+				listOfCharacters[0][i] = Integer.toString(ID);
+				listOfCharacters[1][i] = name;
+				++i;
 			}
 			stmt.close();
 			rs.close();
 			con.close();
 			
 		}catch (SQLException ex) {
+			listOfCharacters = new String[2][1];
+			listOfCharacters[0][0] = "0";
+			listOfCharacters[1][0] = "Error! Do not load!";
 			System.err.println(ex);
 			ex.printStackTrace();
 		}
-		System.out.println("Character array created");
 		return listOfCharacters;
 	}
 	
@@ -258,17 +289,16 @@ public class Character {
 			con.setAutoCommit(false);
 			
 			Statement stmt = con.createStatement();
-			String rs = ("INSERT INTO Character (CharID,Name,Attack,Defense,Speed,Intelligence,Money,MAXHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
+			String rs = ("INSERT INTO Character (CharID,Name,Attack,Defense,Speed,Intelligence,Money,MaxHP,ATTOWN,EQWEAPON,EQARMOR,EXP) " 
 			+ "VALUES ("+ ID +", '" + name + "', "+ attack + ", " + defense + ", " + speed + ", " +
 					intelligence + ", " + money + ", " + maxHP + ", " + atTown + ", " + 
 					eqWeapon + ", " + eqArmor + ", " + exp + ");");
 			
-			System.out.println(ID);
+			System.out.println(rs);
 			stmt.executeUpdate(rs);
 			stmt.close();
 			con.commit();
 			con.close();
-			System.out.println(name + " added to database");
 			
 		}catch (SQLException ex) {
 			System.out.println(ex);
@@ -286,6 +316,7 @@ public class Character {
 			Statement stmt = con.createStatement();
 			String rs = "DELETE FROM Character WHERE CharID="+ charID + ";" +
 					"DELETE FROM ItemOnChar WHERE CharID=" + charID +";";
+			System.out.println(rs);
 			stmt.executeUpdate(rs);
 			stmt.close();
 			con.commit();
@@ -301,18 +332,24 @@ public class Character {
 		Connection con = SQLConnection.getConnection();
 		
 		try{
+			String sql;
 			con.setAutoCommit(false);
 			
 			Statement stmt = con.createStatement();
-			stmt.executeUpdate("UPDATE CHARACTER SET Attack =" + attack + ", Defense = " + defense + ", Speed =" + speed +
-										", Intelligence =" + intelligence + ", Money =" + money + ", atTown=" + atTown + ", eqWeapon =" + eqWeapon +
-										", eqArmor =" + eqArmor + ", EXP =" + exp + " where CharID =" + ID + ";" +
-										"DELETE FROM ItemOnChar WHERE CharID=" + ID +";");
+			System.out.println(sql = "UPDATE CHARACTER SET Attack =" + attack + ", Defense = " + defense + ", Speed =" + speed +
+					", Intelligence =" + intelligence + ", Money =" + money + ", atTown=" + atTown + ", eqWeapon =" + eqWeapon +
+					", eqArmor =" + eqArmor + ", EXP =" + exp + ", MaxHP =" + maxHP + " where CharID =" + ID + ";" +
+					"DELETE FROM ItemOnChar WHERE CharID=" + ID +";"); 
+			stmt.executeUpdate(sql);
 			String itemlist = "";
 			for(int i = 0; i < inventory.size(); ++i)
 				itemlist += "INSERT INTO ItemOnChar VALUES ("+ID+","+inventory.get(i).ID+");";
 			if(!(itemlist.equals("")))
+			{
+				System.out.println(itemlist);
 				stmt.executeUpdate(itemlist);
+			}
+				
 			
 			stmt.close();
 			con.commit();
@@ -322,5 +359,10 @@ public class Character {
 			System.err.println(ex);
 			ex.printStackTrace();
 		}
+	}
+	
+	public String toString()
+	{
+		return name;
 	}
 }
