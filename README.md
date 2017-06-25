@@ -2,13 +2,11 @@
 
 ## Description
 This game is a simple RPG taking the player through a journey between towns until a final boss is reached. Along the way items 
-like weapons, armor, food, etc may be bought to assist in battles and heal a player. Between each town the player is faced with 
-many events. These events include enemy encounters (battles) and tests of the players attributes that provide 
-opportunities to gain/lose gold, HP, and EXP. Once the player reaches the final town they will face a boss enemy in a final battle
-to put their skills to the test!
+like weapons, armor, food, etc may be bought to assist in battles and heal a player. Between each town the player is faced with many events. These events include enemy encounters (battles) and tests of the players attributes that provide 
+opportunities to gain/lose gold, HP, and EXP. Once the player reaches the final town they will face a boss enemy in a final battleto put their skills to the test!
 
 ## Database
-The database used must be in the project file in order to start. The database file contains:
+The Create, Update, Select and Delete queries used can be found in Group6Queries.docx. The database used must be in the project file in order to start. The database file contains:
 
 **Entities**
 - `Character`
